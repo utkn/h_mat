@@ -1,17 +1,14 @@
 use super::{HMat, Row};
 
 #[derive(Clone, Copy, Debug)]
-pub struct Direct;
+pub struct AccessRowDirective<T>(T);
 
-#[derive(Clone, Copy, Debug)]
-pub struct Indirect<T>(T);
-
-pub trait AccessRow<D, A> {
+pub trait AccessRow<D, Directive> {
     fn get_row_ref(&self) -> &Row<D>;
     fn get_row_mut(&mut self) -> &mut Row<D>;
 }
 
-impl<D, R> AccessRow<D, Direct> for HMat<D, R> {
+impl<D, R> AccessRow<D, ()> for HMat<D, R> {
     fn get_row_ref(&self) -> &Row<D> {
         &self.row
     }
@@ -21,7 +18,7 @@ impl<D, R> AccessRow<D, Direct> for HMat<D, R> {
     }
 }
 
-impl<T, R, D, A> AccessRow<D, Indirect<A>> for HMat<T, R>
+impl<T, R, D, A> AccessRow<D, AccessRowDirective<A>> for HMat<T, R>
 where
     R: AccessRow<D, A>,
 {
