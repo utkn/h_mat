@@ -35,6 +35,7 @@ mod tests {
         // Access the rows as a reference to the original matrix.
         let f32_row: &Row<f32> = ref_mat.get_row_ref();
         let i32_row: &Row<i32> = ref_mat.get_row_ref();
+        let col: HCol<&f32, HCol<&i32, ()>> = ref_mat.get_col_ref(0);
     }
 
     #[test]
