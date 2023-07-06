@@ -22,13 +22,15 @@ pub struct HMat<T, R> {
     rem: R,
 }
 
-pub trait Extend: Sized {
+pub trait Extend {
+    type Old;
     /// Extends this `HMat<T, _>` with a new row of type `E`, returning `HMat<E, HMat<T, _>>`.
-    fn extend<E>(self) -> HMat<E, Self>;
+    fn extend<E>(self) -> HMat<E, Self::Old>;
 }
 
 impl<T, R> Extend for HMat<T, R> {
-    fn extend<E>(self) -> HMat<E, Self> {
+    type Old = HMat<T, R>;
+    fn extend<E>(self) -> HMat<E, Self::Old> {
         HMat {
             row: Default::default(),
             rem: self,

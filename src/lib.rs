@@ -14,10 +14,16 @@ mod tests {
     }
 
     #[test]
-    fn reform() {
+    fn reform_inference() {
         let hmat = h_mat::HMat::<usize, _>::new()
             .extend::<f32>()
             .extend::<i32>();
-        let reformed: HMatRef<f32, HMatRef<i32, ()>> = hmat.reform();
+        // Call with && for auto type inference.
+        let reformed: HMatRef<f32, HMatRef<i32, ()>> = (&&hmat).reform();
+        fn receive_reformed(r: HMatRef<f32, HMatRef<i32, ()>>) {
+            r;
+        }
+        // ... also works as an argument!
+        receive_reformed((&&hmat).reform())
     }
 }

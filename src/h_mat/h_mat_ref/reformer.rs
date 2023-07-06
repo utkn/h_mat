@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::h_mat::{AccessRow, HMat};
+use crate::h_mat::AccessRow;
 
 use super::HMatRef;
 
@@ -15,10 +15,11 @@ pub trait Reformable<'a, Head, Directive, Access> {
     fn reform(&'a self) -> HMatRef<'a, Head, Self::Rem>;
 }
 
-impl<'a, D, A, T, R> Reformable<'a, D, (), A> for HMat<T, R>
+// Receiver T for lower priority when called with (&&T).
+impl<'a, D, A, T> Reformable<'a, D, (), A> for T
 where
     D: 'static,
-    HMat<T, R>: AccessRow<D, A>,
+    T: AccessRow<D, A>,
 {
     type Rem = ();
 
@@ -30,21 +31,20 @@ where
     }
 }
 
-impl<'a, D1, D2, A1, A2, R2, T, R> Reformable<'a, D1, ReformableDirective<D2, R2, A2>, A1>
-    for HMat<T, R>
+// Receiver &T for higher priority when called with (&&T).
+impl<'a, D1, D2, A1, A2, R2, T> Reformable<'a, D1, ReformableDirective<D2, R2, A2>, A1> for &T
 where
     D1: 'static,
     D2: 'static,
-    HMat<T, R>: AccessRow<D1, A1>,
-    HMat<T, R>: Reformable<'a, D2, R2, A2>,
-    R: AccessRow<D2, A2>,
+    T: AccessRow<D1, A1>,
+    T: Reformable<'a, D2, R2, A2>,
 {
-    type Rem = HMatRef<'a, D2, <Self as Reformable<'a, D2, R2, A2>>::Rem>;
+    type Rem = HMatRef<'a, D2, <T as Reformable<'a, D2, R2, A2>>::Rem>;
 
     fn reform(&'a self) -> HMatRef<'a, D1, Self::Rem> {
         HMatRef {
             row: self.get_row_ref(),
-            rem: self.reform(),
+            rem: (*self).reform(),
         }
     }
 }
