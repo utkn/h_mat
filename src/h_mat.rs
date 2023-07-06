@@ -114,3 +114,74 @@ where
         }
     }
 }
+
+impl<'a, T1, T2, R> AccessColRef<'a, T1> for HMat<T1, HMat<T2, R>>
+where
+    Self: 'a,
+    HMat<T2, R>: AccessColRef<'a, T2>,
+{
+    type Rem = HCol<&'a T2, <HMat<T2, R> as AccessColRef<'a, T2>>::Rem>;
+    fn get_col_ref(&'a self, idx: usize) -> HCol<&T1, Self::Rem> {
+        HCol {
+            elem: self.row.get(idx),
+            rem: self.rem.get_col_ref(idx),
+        }
+    }
+}
+
+impl<'a, T> AccessColRef<'a, T> for HMat<T, ()> {
+    type Rem = ();
+    fn get_col_ref(&'a self, idx: usize) -> HCol<&T, Self::Rem> {
+        HCol {
+            elem: self.row.get(idx),
+            rem: (),
+        }
+    }
+}
+
+impl<'a, T1, T2, R> AccessColMut<'a, T1> for HMat<T1, HMat<T2, R>>
+where
+    Self: 'a,
+    HMat<T2, R>: AccessColMut<'a, T2>,
+{
+    type Rem = HCol<&'a mut T2, <HMat<T2, R> as AccessColMut<'a, T2>>::Rem>;
+    fn get_col_mut(&'a mut self, idx: usize) -> HCol<&mut T1, Self::Rem> {
+        HCol {
+            elem: self.row.get_mut(idx),
+            rem: self.rem.get_col_mut(idx),
+        }
+    }
+}
+
+impl<'a, T> AccessColMut<'a, T> for HMat<T, ()> {
+    type Rem = ();
+    fn get_col_mut(&mut self, idx: usize) -> HCol<&mut T, Self::Rem> {
+        HCol {
+            elem: self.row.get_mut(idx),
+            rem: (),
+        }
+    }
+}
+
+impl<'a, T1, T2, R> TakeCol<'a, T1> for HMat<T1, HMat<T2, R>>
+where
+    Self: 'a,
+    HMat<T2, R>: TakeCol<'a, T2>,
+{
+    type Rem = HCol<T2, <HMat<T2, R> as TakeCol<'a, T2>>::Rem>;
+    fn take_col(&mut self, idx: usize) -> HCol<T1, Self::Rem> {
+        HCol {
+            elem: self.row.take(idx),
+            rem: self.rem.take_col(idx),
+        }
+    }
+}
+impl<'a, T> TakeCol<'a, T> for HMat<T, ()> {
+    type Rem = ();
+    fn take_col(&mut self, idx: usize) -> HCol<T, Self::Rem> {
+        HCol {
+            elem: self.row.take(idx),
+            rem: (),
+        }
+    }
+}
