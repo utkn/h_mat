@@ -5,6 +5,7 @@ mod access_row;
 mod h_col;
 mod h_mat_ref;
 mod place_col;
+mod reform;
 mod row;
 
 pub use access_col::*;
@@ -12,6 +13,7 @@ pub use access_row::*;
 pub use h_col::*;
 pub use h_mat_ref::*;
 pub use place_col::*;
+pub use reform::*;
 pub use row::*;
 
 /// A heterogenous matrix, in which every row is a vector of a different type.
@@ -38,9 +40,9 @@ impl<T, R> Extend for HMat<T, R> {
     }
 }
 
-impl<T> HMat<T, ()> {
+impl HMat<(), ()> {
     /// Creates a new `HMat` with a single row of `T`.
-    pub fn new() -> Self {
+    pub fn new<T>() -> HMat<T, ()> {
         HMat {
             row: Default::default(),
             rem: (),

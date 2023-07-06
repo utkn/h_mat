@@ -1,29 +1,26 @@
 mod h_mat;
 
+pub use crate::h_mat::*;
+
 #[cfg(test)]
 mod tests {
-    use crate::h_mat::{Extend, HMatRef, Reformable};
+    use crate::{Extend, HMatRef, Reform};
 
     use super::*;
 
     #[test]
     fn extend() {
-        let hmat = h_mat::HMat::<usize, _>::new()
-            .extend::<f32>()
-            .extend::<i32>();
+        // Creating a HMat with i32, f32, usize rows.
+        let _ = h_mat::HMat::new::<usize>().extend::<f32>().extend::<i32>();
     }
 
     #[test]
     fn reform_inference() {
-        let hmat = h_mat::HMat::<usize, _>::new()
-            .extend::<f32>()
-            .extend::<i32>();
-        // Call with && for auto type inference.
-        let reformed: HMatRef<f32, HMatRef<i32, ()>> = (&&hmat).reform();
-        fn receive_reformed(r: HMatRef<f32, HMatRef<i32, ()>>) {
-            r;
-        }
+        let mat = h_mat::HMat::new::<usize>().extend::<f32>().extend::<i32>();
+        // Call with && for auto type inference in let bindings.
+        let _: HMatRef<f32, HMatRef<i32, ()>> = (&&mat).reform();
         // ... also works as an argument!
-        receive_reformed((&&hmat).reform())
+        fn receive_reformed(_: HMatRef<f32, HMatRef<i32, ()>>) {}
+        receive_reformed((&&mat).reform())
     }
 }
