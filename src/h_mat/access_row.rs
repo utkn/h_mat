@@ -1,32 +1,16 @@
-use super::{HMat, Row};
+use super::Row;
 
 #[derive(Clone, Copy, Debug)]
 pub struct AccessRowDirective<T>(T);
 
-pub trait AccessRow<D, Directive> {
+/// Represents a type whose rows can be accessed as a reference.
+pub trait AccessRowRef<D, Directive> {
+    /// Returns a reference to the `Row<D>`.
     fn get_row_ref(&self) -> &Row<D>;
+}
+
+/// Represents a type whose rows can be accessed as a mutable reference.
+pub trait AccessRowMut<D, Directive> {
+    /// Returns a mutable reference to the `Row<D>`.
     fn get_row_mut(&mut self) -> &mut Row<D>;
-}
-
-impl<D, R> AccessRow<D, ()> for HMat<D, R> {
-    fn get_row_ref(&self) -> &Row<D> {
-        &self.row
-    }
-
-    fn get_row_mut(&mut self) -> &mut Row<D> {
-        &mut self.row
-    }
-}
-
-impl<T, R, D, A> AccessRow<D, AccessRowDirective<A>> for HMat<T, R>
-where
-    R: AccessRow<D, A>,
-{
-    fn get_row_ref(&self) -> &Row<D> {
-        self.rem.get_row_ref()
-    }
-
-    fn get_row_mut(&mut self) -> &mut Row<D> {
-        self.rem.get_row_mut()
-    }
 }

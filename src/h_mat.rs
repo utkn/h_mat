@@ -49,3 +49,68 @@ impl HMat<(), ()> {
         }
     }
 }
+
+// Implementation of AccessRowRef for HMat
+impl<D, R> AccessRowRef<D, ()> for HMat<D, R> {
+    fn get_row_ref(&self) -> &Row<D> {
+        &self.row
+    }
+}
+
+impl<T, R, D, A> AccessRowRef<D, AccessRowDirective<A>> for HMat<T, R>
+where
+    R: AccessRowRef<D, A>,
+{
+    fn get_row_ref(&self) -> &Row<D> {
+        self.rem.get_row_ref()
+    }
+}
+
+// Implementation of AccessRowMut for HMat
+impl<D, R> AccessRowMut<D, ()> for HMat<D, R> {
+    fn get_row_mut(&mut self) -> &mut Row<D> {
+        &mut self.row
+    }
+}
+
+impl<T, R, D, A> AccessRowMut<D, AccessRowDirective<A>> for HMat<T, R>
+where
+    R: AccessRowMut<D, A>,
+{
+    fn get_row_mut(&mut self) -> &mut Row<D> {
+        self.rem.get_row_mut()
+    }
+}
+
+// Receiver T for lower priority when called with (&&T).
+impl<'a, D, A, T> Reform<'a, D, (), A> for T
+where
+    D: 'static,
+    T: AccessRowRef<D, A>,
+{
+    type Rem = ();
+
+    fn reform(&'a self) -> HMatRef<'a, D, Self::Rem> {
+        HMatRef {
+            row: (self).get_row_ref(),
+            rem: (),
+        }
+    }
+}
+
+// Receiver &T for higher priority when called with (&&T).
+impl<'a, D1, D2, A1, A2, R2, T> Reform<'a, D1, ReformDirective<D2, R2, A2>, A1> for &T
+where
+    D1: 'static,
+    D2: 'static,
+    T: AccessRowRef<D1, A1> + Reform<'a, D2, R2, A2> + 'a,
+{
+    type Rem = HMatRef<'a, D2, <T as Reform<'a, D2, R2, A2>>::Rem>;
+
+    fn reform(&'a self) -> HMatRef<'a, D1, Self::Rem> {
+        HMatRef {
+            row: self.get_row_ref(),
+            rem: (*self).reform(),
+        }
+    }
+}
