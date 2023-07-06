@@ -1,4 +1,4 @@
-use super::{HCol, HMat};
+use super::HCol;
 
 pub trait AccessColRef<'a, T> {
     type Rem;
