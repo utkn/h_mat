@@ -3,5 +3,11 @@ name = "h_mat"
 version = "0.1.0"
 edition = "2021"
 
+repository = "https://github.com/utkn/h_mat"
+homepage = "https://github.com/utkn/h_mat"
+description = "A type-safe heterogenous matrix type"
+license = "Unlicense"
+readme = "README.md"
+
 [dependencies]
 serde = { version = "1.0.166", features = ["derive"] }
