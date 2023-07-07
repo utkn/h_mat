@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// A single column of a `HMat`.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HCol<T, R> {
     pub(super) elem: Option<T>,
