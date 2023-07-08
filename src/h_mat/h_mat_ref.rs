@@ -1,4 +1,9 @@
-use crate::{AccessColRef, AccessRowDirective, AccessRowRef, HCol, ReformDirective, Reformer};
+use std::marker::PhantomData;
+
+use crate::{
+    AccessColRef, AccessRowDirective, AccessRowRef, HCol, HMatWriter, NewWriter, Reformer,
+    ReformerDirective,
+};
 
 use super::Row;
 
@@ -47,7 +52,7 @@ impl<'a, T> AccessColRef<'a, T> for HMatRef<'a, T, ()> {
     }
 }
 
-impl<'a, H, D, A> Reformer<'a, H, D, (), A> for HMatRef<'a, D, ()>
+impl<'a, H, D, A> Reformer<'a, H, D, ReformerDirective<A, ()>> for HMatRef<'a, D, ()>
 where
     H: AccessRowRef<D, A>,
 {
@@ -59,16 +64,47 @@ where
     }
 }
 
-impl<'a, H, D1, D2, R, Dr, A1, A2> Reformer<'a, H, D1, ReformDirective<D2, Dr, A2>, A1>
+impl<'a, H, D1, D2, R, A1, A2, Tail>
+    Reformer<'a, H, D1, ReformerDirective<A1, ReformerDirective<A2, Tail>>>
     for HMatRef<'a, D1, HMatRef<'a, D2, R>>
 where
     H: AccessRowRef<D1, A1>,
-    HMatRef<'a, D2, R>: Reformer<'a, H, D2, Dr, A2>,
+    H: AccessRowRef<D2, A2>,
+    HMatRef<'a, D2, R>: Reformer<'a, H, D2, ReformerDirective<A2, Tail>>,
 {
     fn reform(h: &'a H) -> Self {
         HMatRef {
             row: h.get_row_ref(),
-            rem: <HMatRef<'a, D2, R> as Reformer<'a, H, D2, Dr, A2>>::reform(h),
+            rem: <HMatRef<'a, D2, R> as Reformer<'a, H, D2, ReformerDirective<A2, Tail>>>::reform(
+                h,
+            ),
+        }
+    }
+}
+
+impl<'a, T1, T2, R> NewWriter for HMatRef<'a, T1, HMatRef<'a, T2, R>>
+where
+    HMatRef<'a, T2, R>: NewWriter,
+{
+    type Ret = HMatWriter<T1, <HMatRef<'a, T2, R> as NewWriter>::Ret>;
+
+    fn new_writer(&self) -> Self::Ret {
+        HMatWriter {
+            row_mods: Default::default(),
+            pd: PhantomData,
+            rem: self.rem.new_writer(),
+        }
+    }
+}
+
+impl<'a, T1> NewWriter for HMatRef<'a, T1, ()> {
+    type Ret = HMatWriter<T1, ()>;
+
+    fn new_writer(&self) -> Self::Ret {
+        HMatWriter {
+            row_mods: Default::default(),
+            pd: PhantomData,
+            rem: (),
         }
     }
 }

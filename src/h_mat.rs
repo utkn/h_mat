@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 mod access_col;
@@ -5,7 +6,7 @@ mod access_row;
 mod h_col;
 mod h_mat_ref;
 mod place_col;
-mod reform;
+mod reformer;
 mod row;
 mod writer;
 
@@ -14,7 +15,7 @@ pub use access_row::*;
 pub use h_col::*;
 pub use h_mat_ref::*;
 pub use place_col::*;
-pub use reform::*;
+pub use reformer::*;
 pub use row::*;
 pub use writer::*;
 
@@ -173,5 +174,38 @@ impl<'a, T> TakeCol<'a, T> for HMat<T, ()> {
             elem: self.head_row.take(idx),
             rem: (),
         }
+    }
+}
+
+impl<D1, D2, R, A, Awt, Hh, Hr>
+    ApplyWriter<HMatWriter<D1, HMatWriter<D2, R>>, ApplyWriterDirective<A, Awt>> for HMat<Hh, Hr>
+where
+    Self: AccessRowMut<D1, A>,
+    Self: ApplyWriter<HMatWriter<D2, R>, Awt>,
+{
+    fn apply(&mut self, w: HMatWriter<D1, HMatWriter<D2, R>>) {
+        let row_mut = self.get_row_mut();
+        w.row_mods
+            .into_iter()
+            .sorted_by_key(|row_mod| row_mod.priority())
+            .for_each(|row_mod| {
+                row_mod.apply(row_mut);
+            });
+        self.apply(w.rem);
+    }
+}
+
+impl<D, A, Hh, Hr> ApplyWriter<HMatWriter<D, ()>, ApplyWriterDirective<A, ()>> for HMat<Hh, Hr>
+where
+    Self: AccessRowMut<D, A>,
+{
+    fn apply(&mut self, w: HMatWriter<D, ()>) {
+        let row_mut = self.get_row_mut();
+        w.row_mods
+            .into_iter()
+            .sorted_by_key(|row_mod| row_mod.priority())
+            .for_each(|row_mod| {
+                row_mod.apply(row_mut);
+            });
     }
 }

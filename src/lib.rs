@@ -181,7 +181,7 @@ mod tests {
             let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
             let mut writer = ref_mat.new_writer();
             // Remove the column 0 of the i32 row.
-            GetWriter::<i32, _, _>::get_writer(&mut writer).unset_col(0);
+            GetSubWriter::<i32, _, _>::get_writer(&mut writer).unset_col(0);
             mat.apply(writer);
         }
         {
