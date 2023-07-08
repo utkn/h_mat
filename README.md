@@ -1,6 +1,8 @@
 # h_mat
 
-A type-safe and convenient heterogenous matrix type in Rust. Intended to use for an ECS with compile-time type-checking. 
+A type-safe and convenient heterogenous matrix type in Rust. Intended to be used for an ECS with compile-time type-checking. 
+
+A `HMat`, in this context, means *a list of vectors of arbitrary types*, e.g., a `HMat` with three rows can be `(Vec<Option<T1>>, Vec<Option<T2>>, Vec<Option<T3>>)` where `T1 != T2 != T3`. In an ECS setting, a row would store the instances of a component in the contiguous memory, e.g., `Vec<Option<Position>>`, where a column would correspond to an entity.
 
 ## Basic usage
 
@@ -11,7 +13,7 @@ Use `extend` to build the matrix, and use the `get_row_ref/mut` methods (with ty
 ```rust
 // Creating a HMat with i32, f32, usize rows.
 let mat: HMat<i32, HMat<f32, HMat<usize, ()>>> = 
-    h_mat::HMat::new::<usize>().extend::<f32>().extend::<i32>();
+    HMat::new::<usize>().extend::<f32>().extend::<i32>();
 // Access the rows explicitly as a reference.
 let usize_row_ref: &Row<usize> = mat.get_row_ref();
 let i32_row_ref: &Row<i32> = mat.get_row_ref();
@@ -25,7 +27,7 @@ let i32_row_mut: &mut Row<i32> = mat.get_row_mut();
 Note that the column types are written explicitly for reference. In general, they are inferred directly from the type of the matrix.
 
 ```rust
-let mat = h_mat::HMat::new::<usize>().extend::<f32>().extend::<i32>();
+let mat = HMat::new::<usize>().extend::<f32>().extend::<i32>();
 // Access a single column as a reference.
 let col_ref: HCol<&i32, HCol<&f32, HCol<&usize, ()>>> = mat.get_col_ref(0);
 // ... or as a mutable reference...
@@ -42,7 +44,7 @@ mat.place_col(1, col);
 We can invoke `HMatRef::reform` to extract a reference matrix with arbitrary row order, i.e., a `HMatRef`, whose fields are indicated by the type annotation either at the let binding or the parameter. 
 
 ```rust
-let mat = h_mat::HMat::new::<usize>().extend::<f32>().extend::<i32>();
+let mat = HMat::new::<usize>().extend::<f32>().extend::<i32>();
 // Reform as a heterogenous matrix of f32, and i32 rows.
 let mat_ref: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
 // ... also works as an argument!
