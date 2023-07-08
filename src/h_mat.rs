@@ -5,6 +5,7 @@ mod access_col;
 mod access_row;
 mod h_col;
 mod h_mat_ref;
+mod iterator;
 mod place_col;
 mod row;
 mod slicer;

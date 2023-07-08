@@ -4,8 +4,6 @@ pub use crate::h_mat::*;
 
 #[cfg(test)]
 mod tests {
-    use crate::{Extend, HMatRef};
-
     use super::*;
 
     #[test]
