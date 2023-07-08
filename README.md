@@ -2,7 +2,7 @@
 
 A type-safe and convenient heterogenous matrix type in Rust. Intended to be used for an ECS with compile-time type-checking. 
 
-A `HMat`, in this context, means *a list of vectors of arbitrary types*, e.g., a `HMat` with three rows can be `(Vec<Option<T1>>, Vec<Option<T2>>, Vec<Option<T3>>)` where `T1 != T2 != T3`. In an ECS setting, a row would store the instances of a component in the contiguous memory, e.g., `Vec<Option<Position>>`, where a column would correspond to an entity.
+A `HMat`, in this context, means *a list of vectors of arbitrary types*, e.g., a `HMat` with three rows can be `(Vec<Option<T1>>, Vec<Option<T2>>, Vec<Option<T3>>)` where `T1 != T2 != T3`. In an ECS setting, `HMat` would represent the game state, a row would store the instances of a component in the contiguous memory, whereas a column would correspond to an entity.
 
 ## Basic usage
 
