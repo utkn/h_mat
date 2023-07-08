@@ -2,7 +2,7 @@
 
 A type-safe and convenient heterogenous matrix type in Rust. Intended to be used for an ECS with compile-time type-checking. 
 
-A `HMat`, in this context, means *a list of vectors of arbitrary types*, e.g., a `HMat` with three rows can be `(Vec<Option<T1>>, Vec<Option<T2>>, Vec<Option<T3>>)` where `T1 != T2 != T3`. In an ECS setting, `HMat` would represent the game state, a row would store the instances of a component in the contiguous memory, whereas a column would correspond to an entity.
+A `HMat`, in this context, means *a list of `Vec`s of arbitrary `Option` types*, e.g., a `HMat` with three rows will have the types `Vec<Option<T1>>`, `Vec<Option<T2>>`, and `Vec<Option<T3>>` where `T1 != T2 != T3`. In an ECS setting, `HMat` would represent the game state, a row would store the instances of a component in the contiguous memory, whereas a column would correspond to an entity.
 
 ## Basic usage
 
@@ -24,7 +24,7 @@ let i32_row_mut: &mut Row<i32> = mat.get_row_mut();
 
 ### Column access
 
-Note that the column types are written explicitly for reference. In general, they are inferred directly from the type of the matrix.
+Accessing a particular column is possible through `get_col_ref/mut`, `take_col` methods. Note that the column types are written explicitly for reference below. In general, the column type can be inferred directly from the type of the matrix.
 
 ```rust
 let mat = HMat::new::<usize>().extend::<f32>().extend::<i32>();
@@ -45,7 +45,7 @@ We can invoke `HMatRef::reform` to extract a reference matrix with arbitrary row
 
 ```rust
 let mat = HMat::new::<usize>().extend::<f32>().extend::<i32>();
-// Reform as a heterogenous matrix of f32, and i32 rows.
+// Reform as a heterogenous matrix of f32, and i32 rows (type annotations are necessary!)
 let mat_ref: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
 // ... also works as an argument!
 fn receive_reformed(_: HMatRef<f32, HMatRef<i32, ()>>) {}
