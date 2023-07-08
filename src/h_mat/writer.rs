@@ -1,39 +1,16 @@
 use std::marker::PhantomData;
 
-use crate::Row;
+use itertools::Itertools;
 
-/// Represents a modification on a `Row<T>`.
-pub enum RowMod<T> {
-    SetCol(usize, T),
-    UnsetCol(usize),
-    UpdateCol(usize, Box<dyn FnOnce(&mut T)>),
-}
+use crate::{AccessRowMut, HMat};
 
-impl<T> RowMod<T> {
-    pub(crate) fn priority(&self) -> usize {
-        match self {
-            RowMod::SetCol(_, _) => 0,
-            RowMod::UpdateCol(_, _) => 10,
-            RowMod::UnsetCol(_) => 20,
-        }
-    }
+mod new_writer;
+mod row_mod;
+mod sub_writer;
 
-    pub(crate) fn apply(self, row: &mut Row<T>) {
-        match self {
-            RowMod::SetCol(col_idx, new_val) => {
-                row.place(col_idx, new_val);
-            }
-            RowMod::UnsetCol(col_idx) => {
-                row.take(col_idx);
-            }
-            RowMod::UpdateCol(col_idx, f) => {
-                row.get_mut(col_idx).map(|val| {
-                    f(val);
-                });
-            }
-        }
-    }
-}
+pub(crate) use new_writer::*;
+use row_mod::*;
+use sub_writer::*;
 
 /// A writer that can store a list of modifications, i.e., `RowMod`s that can be applied to a `HMat` in the future. Can be useful when it is not possible to maintain a mutable reference to the original matrix.
 /// Note that the modifications are *NOT* applied in the same order they are appended to the writer. The order is always: `SetCol`, `UpdateCol`, and then `UnsetCol`.
@@ -41,51 +18,6 @@ pub struct HMatWriter<T, R> {
     pub(crate) row_mods: Vec<RowMod<T>>,
     pub(crate) rem: R,
     pub(crate) pd: PhantomData<*const T>,
-}
-
-/// Internal type used for the recursive implementations of the `GetSubWriter` trait.
-pub struct GetSubWriterDirective<T>(PhantomData<*const T>);
-
-/// Represents a writer type that can return one of its subwriters, e.g., `HMatWriter<T1, HMatWriter<T2, R>>` has a subwriter `HMatWriter<T2, R>`.
-pub trait GetSubWriter<T, R, Directive> {
-    /// Returns the subwriter `HMatWriter<T, R>` as a mutable reference.
-    fn subwriter_mut(&mut self) -> &mut HMatWriter<T, R>;
-}
-
-impl<D, R> GetSubWriter<D, R, ()> for HMatWriter<D, R> {
-    fn subwriter_mut(&mut self) -> &mut HMatWriter<D, R> {
-        self
-    }
-}
-
-impl<D, R, R1, T, InnerDirective> GetSubWriter<D, R, GetSubWriterDirective<InnerDirective>>
-    for HMatWriter<T, R1>
-where
-    R1: GetSubWriter<D, R, InnerDirective>,
-{
-    fn subwriter_mut(&mut self) -> &mut HMatWriter<D, R> {
-        self.rem.subwriter_mut()
-    }
-}
-
-pub trait Writer<T> {
-    fn set_col(&mut self, col_idx: usize, new_val: T);
-    fn unset_col(&mut self, col_idx: usize);
-    fn update_col(&mut self, col_idx: usize, f: impl FnOnce(&mut T) + 'static);
-}
-
-impl<T, R> Writer<T> for HMatWriter<T, R> {
-    fn set_col(&mut self, col_idx: usize, new_val: T) {
-        self.row_mods.push(RowMod::SetCol(col_idx, new_val));
-    }
-
-    fn unset_col(&mut self, col_idx: usize) {
-        self.row_mods.push(RowMod::UnsetCol(col_idx));
-    }
-
-    fn update_col(&mut self, col_idx: usize, f: impl FnOnce(&mut T) + 'static) {
-        self.row_mods.push(RowMod::UpdateCol(col_idx, Box::new(f)));
-    }
 }
 
 /// Internal type used for the recursive implementations of the `ApplyWriter` trait.
@@ -96,9 +28,103 @@ pub trait ApplyWriter<W, D> {
     fn apply(&mut self, w: W);
 }
 
-/// Represents a type that can return a writer corresponding to its fields.
-pub trait NewWriter {
-    type Ret;
-    /// Returns a new writer that can be used to gather modifications and apply them at once.
-    fn new_writer(&self) -> Self::Ret;
+impl<D1, D2, R, A, Awt, Hh, Hr>
+    ApplyWriter<HMatWriter<D1, HMatWriter<D2, R>>, ApplyWriterDirective<A, Awt>> for HMat<Hh, Hr>
+where
+    Self: AccessRowMut<D1, A>,
+    Self: ApplyWriter<HMatWriter<D2, R>, Awt>,
+{
+    fn apply(&mut self, w: HMatWriter<D1, HMatWriter<D2, R>>) {
+        let row_mut = self.get_row_mut();
+        w.row_mods
+            .into_iter()
+            .sorted_by_key(|row_mod| row_mod.priority())
+            .for_each(|row_mod| {
+                row_mod.apply(row_mut);
+            });
+        self.apply(w.rem);
+    }
+}
+
+impl<D, A, Hh, Hr> ApplyWriter<HMatWriter<D, ()>, ApplyWriterDirective<A, ()>> for HMat<Hh, Hr>
+where
+    Self: AccessRowMut<D, A>,
+{
+    fn apply(&mut self, w: HMatWriter<D, ()>) {
+        let row_mut = self.get_row_mut();
+        w.row_mods
+            .into_iter()
+            .sorted_by_key(|row_mod| row_mod.priority())
+            .for_each(|row_mod| {
+                row_mod.apply(row_mut);
+            });
+    }
+}
+
+impl<T, R> HMatWriter<T, R> {
+    pub fn set_col<D, A>(&mut self, col_idx: usize, new_val: D)
+    where
+        Self: GetSubWriter<D, A>,
+    {
+        self.sub_writer_mut()
+            .row_mods
+            .push(RowMod::SetCol(col_idx, new_val));
+    }
+
+    pub fn unset_col<D, A>(&mut self, col_idx: usize)
+    where
+        Self: GetSubWriter<D, A>,
+    {
+        self.sub_writer_mut()
+            .row_mods
+            .push(RowMod::UnsetCol(col_idx));
+    }
+
+    pub fn update_col<D, A>(&mut self, col_idx: usize, f: impl FnOnce(&mut D) + 'static)
+    where
+        Self: GetSubWriter<D, A>,
+    {
+        self.sub_writer_mut()
+            .row_mods
+            .push(RowMod::UpdateCol(col_idx, Box::new(f)));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    use super::new_writer::NewWriter;
+
+    #[test]
+    fn writer() {
+        let mut mat = HMat::<usize, ()>::new().extend::<f32>().extend::<i32>();
+        {
+            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
+            let mut writer = ref_mat.new_writer();
+            // Set the column 0 of the i32 row.
+            writer.set_col(0, 3);
+            // Update the column 0 of the i32 row.
+            writer.update_col(0, |val: &mut i32| {
+                *val += 1;
+            });
+            // Apply the modifications.
+            mat.apply(writer);
+        }
+        {
+            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
+            assert_eq!(ref_mat.get_row_ref(), &Row::<i32>::from_iter([Some(4)]));
+        }
+        {
+            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
+            let mut writer = ref_mat.new_writer();
+            // Remove the column 0 of the i32 row.
+            writer.unset_col::<i32, _>(0);
+            mat.apply(writer);
+        }
+        {
+            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
+            assert_eq!(ref_mat.get_row_ref(), &Row::<i32>::from_iter([None]));
+        }
+    }
 }

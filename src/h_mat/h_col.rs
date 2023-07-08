@@ -1,6 +1,8 @@
-use std::marker::PhantomData;
-
 use serde::{Deserialize, Serialize};
+
+mod sub_col;
+
+use sub_col::*;
 
 /// A single column of a `HMat`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -10,54 +12,51 @@ pub struct HCol<T, R> {
 }
 
 impl<T, R> HCol<T, R> {
-    pub fn get(&self) -> Option<&T> {
+    fn get_first(&self) -> Option<&T> {
         self.elem.as_ref()
     }
 
-    pub fn get_mut(&mut self) -> Option<&mut T> {
+    fn get_first_mut(&mut self) -> Option<&mut T> {
         self.elem.as_mut()
     }
 
-    pub fn take(&mut self) -> Option<T> {
+    fn take_first(&mut self) -> Option<T> {
         self.elem.take()
     }
 
-    pub fn place(&mut self, new_elem: T) -> Option<T> {
+    fn place_first(&mut self, new_elem: T) -> Option<T> {
         self.elem.replace(new_elem)
     }
-}
 
-/// Internal type used for the recursive implementations of the `GetSubCol` trait.
-pub struct GetSubColDirective<T>(PhantomData<T>);
-
-/// Represents a column that can return one of its subcolumns, e.g., `HMatCol<T1, HMatCol<T2, R>>` has a subcolumn `HMatCol<T2, R>`.
-pub trait GetSubCol<D, R, Directive> {
-    /// Returns the subcolumn `HCol<D, R>` as a reference.
-    fn subcol_ref(&self) -> &HCol<D, R>;
-    /// Returns the subcolumn `HCol<D, R>` as a mutable reference.
-    fn subcol_mut(&mut self) -> &mut HCol<D, R>;
-}
-
-impl<D, R> GetSubCol<D, R, ()> for HCol<D, R> {
-    fn subcol_ref(&self) -> &HCol<D, R> {
-        self
+    /// Returns a reference to the element of type `D` in this column.
+    pub fn get<'a, D, A>(&'a self) -> Option<&D>
+    where
+        Self: GetSubCol<'a, D, A>,
+    {
+        self.sub_col_ref().get_first()
     }
 
-    fn subcol_mut(&mut self) -> &mut HCol<D, R> {
-        self
-    }
-}
-
-impl<D, R, T, R1, InnerDirective> GetSubCol<D, R, GetSubColDirective<InnerDirective>>
-    for HCol<T, R1>
-where
-    R1: GetSubCol<D, R, InnerDirective>,
-{
-    fn subcol_ref(&self) -> &HCol<D, R> {
-        self.rem.subcol_ref()
+    /// Returns a mutable reference to the element of type `D` in this column.
+    pub fn get_mut<'a, D, A>(&'a mut self) -> Option<&mut D>
+    where
+        Self: GetSubCol<'a, D, A>,
+    {
+        self.sub_col_mut().get_first_mut()
     }
 
-    fn subcol_mut(&mut self) -> &mut HCol<D, R> {
-        self.rem.subcol_mut()
+    /// Removes and returns the element of type `D` in this column.
+    pub fn take<'a, D, A>(&'a mut self) -> Option<D>
+    where
+        Self: GetSubCol<'a, D, A>,
+    {
+        self.sub_col_mut().take_first()
+    }
+
+    /// Places the given element `new_elem` on this column and returns the overwritten value.
+    pub fn place<'a, D, A>(&'a mut self, new_elem: D) -> Option<D>
+    where
+        Self: GetSubCol<'a, D, A>,
+    {
+        self.sub_col_mut().place_first(new_elem)
     }
 }
