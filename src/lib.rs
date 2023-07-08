@@ -165,9 +165,9 @@ mod tests {
             let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
             let mut writer = ref_mat.new_writer();
             // Set the column 0 of the i32 row.
-            writer.get_writer().set_col(0, 3);
+            writer.subwriter_mut().set_col(0, 3);
             // Update the column 0 of the i32 row.
-            writer.get_writer().update_col(0, |val: &mut i32| {
+            writer.subwriter_mut().update_col(0, |val: &mut i32| {
                 *val += 1;
             });
             // Apply the modifications.
@@ -181,7 +181,7 @@ mod tests {
             let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
             let mut writer = ref_mat.new_writer();
             // Remove the column 0 of the i32 row.
-            GetSubWriter::<i32, _, _>::get_writer(&mut writer).unset_col(0);
+            GetSubWriter::<i32, _, _>::subwriter_mut(&mut writer).unset_col(0);
             mat.apply(writer);
         }
         {

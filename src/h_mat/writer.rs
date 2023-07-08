@@ -48,11 +48,12 @@ pub struct GetSubWriterDirective<T>(PhantomData<*const T>);
 
 /// Represents a writer type that can return one of its subwriters, e.g., `HMatWriter<T1, HMatWriter<T2, R>>` has a subwriter `HMatWriter<T2, R>`.
 pub trait GetSubWriter<T, R, Directive> {
-    fn get_writer(&mut self) -> &mut HMatWriter<T, R>;
+    /// Returns the subwriter `HMatWriter<T, R>` as a mutable reference.
+    fn subwriter_mut(&mut self) -> &mut HMatWriter<T, R>;
 }
 
 impl<D, R> GetSubWriter<D, R, ()> for HMatWriter<D, R> {
-    fn get_writer(&mut self) -> &mut HMatWriter<D, R> {
+    fn subwriter_mut(&mut self) -> &mut HMatWriter<D, R> {
         self
     }
 }
@@ -62,8 +63,8 @@ impl<D, R, R1, T, InnerDirective> GetSubWriter<D, R, GetSubWriterDirective<Inner
 where
     R1: GetSubWriter<D, R, InnerDirective>,
 {
-    fn get_writer(&mut self) -> &mut HMatWriter<D, R> {
-        self.rem.get_writer()
+    fn subwriter_mut(&mut self) -> &mut HMatWriter<D, R> {
+        self.rem.subwriter_mut()
     }
 }
 
