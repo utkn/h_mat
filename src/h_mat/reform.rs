@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 
+/// Internal type used for the recursive implementations of the `Reformer` trait.
 pub struct ReformDirective<Head, Tail, Access>(
     PhantomData<*const Head>,
     PhantomData<*const Tail>,

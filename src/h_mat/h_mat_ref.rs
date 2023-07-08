@@ -2,11 +2,11 @@ use crate::{AccessColRef, AccessRowDirective, AccessRowRef, HCol, ReformDirectiv
 
 use super::Row;
 
-/// A reference to a `HMat` with arbitrarily ordered rows. Invoke `reform` on the original `HMat` to construct a `HMatRef`.
+/// A reference to a `HMat` with arbitrarily ordered rows.
 #[derive(Clone, Copy, Debug)]
 pub struct HMatRef<'a, D, R> {
-    pub row: &'a Row<D>,
-    pub rem: R,
+    pub(crate) row: &'a Row<D>,
+    pub(crate) rem: R,
 }
 
 impl<'a, D, R> AccessRowRef<D, ()> for HMatRef<'a, D, R> {

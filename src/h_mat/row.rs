@@ -1,16 +1,22 @@
 use serde::{Deserialize, Serialize};
 
 /// A homogenous row, in which all the elements of the same type. Elements are stored as `Option<T>` types, as they can be `None` or some value `Some(T)`.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Row<T>(pub(super) Vec<Option<T>>);
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Row<T>(pub(crate) Vec<Option<T>>);
 
 impl<T> Default for Row<T> {
+    /// Returns an empty row.
     fn default() -> Self {
         Self(Default::default())
     }
 }
 
 impl<T> Row<T> {
+    /// Constructs a new row with the given initial elements.
+    pub fn from_iter(iter: impl IntoIterator<Item = Option<T>>) -> Self {
+        Self(Vec::from_iter(iter.into_iter()))
+    }
+
     /// Returns the element at the given index.
     pub fn get(&self, idx: usize) -> Option<&T> {
         self.0.get(idx).map(|opt_elem| opt_elem.as_ref()).flatten()

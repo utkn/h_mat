@@ -1,5 +1,6 @@
 use super::Row;
 
+/// Internal type used for the recursive implementations of `AccessRowRef` and `AccessRowMut` traits.
 #[derive(Clone, Copy, Debug)]
 pub struct AccessRowDirective<T>(T);
 

@@ -1,6 +1,6 @@
 [package]
 name = "h_mat"
-version = "0.1.1"
+version = "0.1.11"
 edition = "2021"
 
 repository = "https://github.com/utkn/h_mat"
@@ -10,4 +10,5 @@ license = "Unlicense"
 readme = "README.md"
 
 [dependencies]
+itertools = "0.11.0"
 serde = { version = "1.0.166", features = ["derive"] }

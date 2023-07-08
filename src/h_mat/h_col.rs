@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 /// A single column of a `HMat`.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HCol<T, R> {
-    pub(super) elem: Option<T>,
-    pub(super) rem: R,
+    pub(crate) elem: Option<T>,
+    pub(crate) rem: R,
 }
 
 impl<T, R> HCol<T, R> {
