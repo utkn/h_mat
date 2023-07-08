@@ -1,4 +1,4 @@
-use crate::{AccessColRef, AccessRowDirective, AccessRowRef, HCol};
+use crate::{AccessColRef, AccessRowDirective, AccessRowRef, HCol, ReformDirective, Reformer};
 
 use super::Row;
 
@@ -9,7 +9,6 @@ pub struct HMatRef<'a, D, R> {
     pub rem: R,
 }
 
-// Implementation of AccessRowRef for HMatRef
 impl<'a, D, R> AccessRowRef<D, ()> for HMatRef<'a, D, R> {
     fn get_row_ref(&self) -> &Row<D> {
         &self.row
@@ -44,6 +43,32 @@ impl<'a, T> AccessColRef<'a, T> for HMatRef<'a, T, ()> {
         HCol {
             elem: self.row.get(idx),
             rem: (),
+        }
+    }
+}
+
+impl<'a, H, D, A> Reformer<'a, H, D, (), A> for HMatRef<'a, D, ()>
+where
+    H: AccessRowRef<D, A>,
+{
+    fn reform(h: &'a H) -> Self {
+        HMatRef {
+            row: h.get_row_ref(),
+            rem: (),
+        }
+    }
+}
+
+impl<'a, H, D1, D2, R, Dr, A1, A2> Reformer<'a, H, D1, ReformDirective<D2, Dr, A2>, A1>
+    for HMatRef<'a, D1, HMatRef<'a, D2, R>>
+where
+    H: AccessRowRef<D1, A1>,
+    HMatRef<'a, D2, R>: Reformer<'a, H, D2, Dr, A2>,
+{
+    fn reform(h: &'a H) -> Self {
+        HMatRef {
+            row: h.get_row_ref(),
+            rem: <HMatRef<'a, D2, R> as Reformer<'a, H, D2, Dr, A2>>::reform(h),
         }
     }
 }

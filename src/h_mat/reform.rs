@@ -1,15 +1,12 @@
 use std::marker::PhantomData;
 
-use super::HMatRef;
-
 pub struct ReformDirective<Head, Tail, Access>(
     PhantomData<*const Head>,
     PhantomData<*const Tail>,
     PhantomData<*const Access>,
 );
 
-/// Represents a type that can be converted into a `HMatRef` with arbitrary row order.
-pub trait Reform<'a, Head, Directive, Access> {
-    type Rem;
-    fn reform(&'a self) -> HMatRef<'a, Head, Self::Rem>;
+/// Represents a type that can construct itself by rearranging the fields of the original type `H`.
+pub trait Reformer<'a, H, Head, Directive, Access> {
+    fn reform(h: &'a H) -> Self;
 }
