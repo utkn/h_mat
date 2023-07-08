@@ -54,3 +54,22 @@ receive_reformed(HMatRef::reform(&mat));
 let i32_row_ref: &Row<i32> = mat_ref.get_row_ref();
 let first_col_ref = mat_ref.get_col_ref(0);
 ```
+
+### Writing
+
+Other than calling the methods that return mutable references to the underlying objects, it is possible to collect the modifications to be applied in the future. This is useful, since it is not possible to mutate the original matrix while holding a `HMatRef` pointing to that matrix.
+
+```rust
+let mut mat = h_mat::HMat::new::<usize>().extend::<f32>().extend::<i32>();
+let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
+// Create a new writer from the `HMatRef`.
+let mut writer = ref_mat.new_writer();
+// Set the column 0 of the i32 row.
+writer.get_writer().set_col(0, 3);
+// Update the column 0 of the i32 row.
+writer.get_writer().update_col(0, |val: &mut i32| {
+    *val += 1;
+});
+// Apply the modifications at once. This is the only place where we borrow `mat` by mutable reference.
+mat.apply(writer);
+```
