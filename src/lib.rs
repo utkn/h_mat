@@ -52,16 +52,16 @@ mod tests {
     }
 
     #[test]
-    fn reform() {
+    fn slice() {
         let mat = h_mat::HMat::new_with::<usize>([Some(0), Some(1), Some(2)])
             .extend_with::<f32, _>([None, Some(0.5), None])
             .extend_with::<i32, _>([None, None, Some(-1)]);
-        // Invoke `reform` to extract a reference matrix with arbitrary row order.
+        // Invoke `slice` to extract a reference matrix with arbitrary row order.
         // The returned type `HMatRef` is a heterogenous matrix of reference rows.
-        let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
+        let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
         // ... also works as an argument!
-        fn receive_reformed(_: HMatRef<f32, HMatRef<i32, ()>>) {}
-        receive_reformed(HMatRef::reform(&mat));
+        fn receive_sliced(_: HMatRef<f32, HMatRef<i32, ()>>) {}
+        receive_sliced(HMatRef::slice(&mat));
         // Access the rows/cols as a reference to the original matrix.
         let f32_row: &Row<f32> = ref_mat.get_row_ref();
         let i32_row: &Row<i32> = ref_mat.get_row_ref();
@@ -162,7 +162,7 @@ mod tests {
     fn writer() {
         let mut mat = h_mat::HMat::new::<usize>().extend::<f32>().extend::<i32>();
         {
-            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
+            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
             let mut writer = ref_mat.new_writer();
             // Set the column 0 of the i32 row.
             writer.get_writer().set_col(0, 3);
@@ -174,18 +174,18 @@ mod tests {
             mat.apply(writer);
         }
         {
-            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
+            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
             assert_eq!(ref_mat.get_row_ref(), &Row::<i32>::from_iter([Some(4)]));
         }
         {
-            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
+            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
             let mut writer = ref_mat.new_writer();
             // Remove the column 0 of the i32 row.
             GetSubWriter::<i32, _, _>::get_writer(&mut writer).unset_col(0);
             mat.apply(writer);
         }
         {
-            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
+            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
             assert_eq!(ref_mat.get_row_ref(), &Row::<i32>::from_iter([None]));
         }
     }

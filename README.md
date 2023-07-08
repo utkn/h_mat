@@ -39,17 +39,17 @@ let col: HCol<i32, HCol<f32, HCol<usize, ()>>> = mat.take_col(0);
 mat.place_col(1, col);
 ```
 
-### Reforming
+### Slicing
 
-We can invoke `HMatRef::reform` to extract a reference matrix with arbitrary row order, i.e., a `HMatRef`, whose fields are indicated by the type annotation either at the let binding or the parameter. 
+We can invoke `HMatRef::slice` to extract a reference matrix with a subset of the rows of the original matrix, i.e., a `HMatRef`, whose fields are indicated by the type annotation either at the let binding or the parameter. 
 
 ```rust
 let mat = HMat::new::<usize>().extend::<f32>().extend::<i32>();
-// Reform as a heterogenous matrix of f32, and i32 rows (type annotations are necessary!)
-let mat_ref: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
+// Slice as a heterogenous matrix of f32, and i32 rows (type annotations are necessary!)
+let mat_ref: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
 // ... also works as an argument!
-fn receive_reformed(_: HMatRef<f32, HMatRef<i32, ()>>) {}
-receive_reformed(HMatRef::reform(&mat));
+fn receive_sliced(_: HMatRef<f32, HMatRef<i32, ()>>) {}
+receive_sliced(HMatRef::slice(&mat));
 // Of course, we can access the rows/cols of the original matrix.
 let i32_row_ref: &Row<i32> = mat_ref.get_row_ref();
 let first_col_ref = mat_ref.get_col_ref(0);
@@ -61,7 +61,7 @@ Other than calling the methods that return mutable references to the underlying 
 
 ```rust
 let mut mat = h_mat::HMat::new::<usize>().extend::<f32>().extend::<i32>();
-let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::reform(&mat);
+let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
 // Create a new writer from the `HMatRef`.
 let mut writer = ref_mat.new_writer();
 // Set the column 0 of the i32 row.

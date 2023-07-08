@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 
 use crate::{
-    AccessColRef, AccessRowDirective, AccessRowRef, HCol, HMatWriter, NewWriter, Reformer,
-    ReformerDirective,
+    AccessColRef, AccessRowDirective, AccessRowRef, HCol, HMatWriter, NewWriter, Slicer,
+    SlicerDirective,
 };
 
 use super::Row;
@@ -52,11 +52,11 @@ impl<'a, T> AccessColRef<'a, T> for HMatRef<'a, T, ()> {
     }
 }
 
-impl<'a, H, D, A> Reformer<'a, H, D, ReformerDirective<A, ()>> for HMatRef<'a, D, ()>
+impl<'a, H, D, A> Slicer<'a, H, D, SlicerDirective<A, ()>> for HMatRef<'a, D, ()>
 where
     H: AccessRowRef<D, A>,
 {
-    fn reform(h: &'a H) -> Self {
+    fn slice(h: &'a H) -> Self {
         HMatRef {
             row: h.get_row_ref(),
             rem: (),
@@ -65,19 +65,17 @@ where
 }
 
 impl<'a, H, D1, D2, R, A1, A2, Tail>
-    Reformer<'a, H, D1, ReformerDirective<A1, ReformerDirective<A2, Tail>>>
+    Slicer<'a, H, D1, SlicerDirective<A1, SlicerDirective<A2, Tail>>>
     for HMatRef<'a, D1, HMatRef<'a, D2, R>>
 where
     H: AccessRowRef<D1, A1>,
     H: AccessRowRef<D2, A2>,
-    HMatRef<'a, D2, R>: Reformer<'a, H, D2, ReformerDirective<A2, Tail>>,
+    HMatRef<'a, D2, R>: Slicer<'a, H, D2, SlicerDirective<A2, Tail>>,
 {
-    fn reform(h: &'a H) -> Self {
+    fn slice(h: &'a H) -> Self {
         HMatRef {
             row: h.get_row_ref(),
-            rem: <HMatRef<'a, D2, R> as Reformer<'a, H, D2, ReformerDirective<A2, Tail>>>::reform(
-                h,
-            ),
+            rem: <HMatRef<'a, D2, R> as Slicer<'a, H, D2, SlicerDirective<A2, Tail>>>::slice(h),
         }
     }
 }

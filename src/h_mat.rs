@@ -6,8 +6,8 @@ mod access_row;
 mod h_col;
 mod h_mat_ref;
 mod place_col;
-mod reformer;
 mod row;
+mod slicer;
 mod writer;
 
 pub use access_col::*;
@@ -15,8 +15,8 @@ pub use access_row::*;
 pub use h_col::*;
 pub use h_mat_ref::*;
 pub use place_col::*;
-pub use reformer::*;
 pub use row::*;
+pub use slicer::*;
 pub use writer::*;
 
 /// A heterogenous matrix, in which every row is a vector of a different type.
