@@ -14,12 +14,12 @@ pub(crate) use access_col::*;
 pub(crate) use access_row::*;
 pub(crate) use iterator::*;
 pub(crate) use slicer::*;
-pub(crate) use writer::*;
 
 pub use extend::*;
 pub use h_col::*;
 pub use h_mat_ref::*;
 pub use row::*;
+pub use writer::*;
 
 /// A heterogenous matrix, in which every row is a vector of a different type.
 #[derive(Clone, Debug, Serialize, Deserialize)]

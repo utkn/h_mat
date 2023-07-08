@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-/// A homogenous row, in which all the elements of the same type. Elements are stored as `Option<T>` types, as they can be `None` or some value `Some(T)`.
+/// A homogenous row, implemented as a wrapper around `Vec<Option<T>>`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Row<T>(pub(crate) Vec<Option<T>>);
 
