@@ -2,10 +2,13 @@ use std::marker::PhantomData;
 
 use crate::{h_mat::writer::sub_writer::GetSubWriter, HMatWriter};
 
+/// Represents a recursive type that can be merged with another recursive type.
 pub trait Merge<Other, Directive> {
+    /// Merges this with `other` recursively.
     fn merge(&mut self, other: Other);
 }
 
+/// Internal type used for the recursive implementations of the `Merge` trait.
 pub struct MergeDirective<Head, Tail>(PhantomData<Head>, PhantomData<Tail>);
 
 impl<T, D, R, A1, A2, DirectiveTail>

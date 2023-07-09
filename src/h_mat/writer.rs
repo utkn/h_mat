@@ -9,13 +9,13 @@ mod new_writer;
 mod row_mod;
 mod sub_writer;
 
-use merge::*;
+pub use merge::*;
 pub use new_writer::*;
-use row_mod::*;
-use sub_writer::*;
+pub use row_mod::*;
+pub use sub_writer::*;
 
 /// A writer that can store a list of modifications, i.e., `RowMod`s that can be applied to a `HMat` in the future. Can be useful when it is not possible to maintain a mutable reference to the original matrix.
-/// Note that the modifications are *NOT* applied in the same order they are appended to the writer. The order is always: `SetCol`, `UpdateCol`, and then `UnsetCol`.
+/// Note that the modifications are **NOT** applied in the same order they are appended to the writer. The order is always: `SetCol`, `UpdateCol`, and then `UnsetCol`.
 pub struct HMatWriter<T, R> {
     pub(crate) row_mods: Vec<RowMod<T>>,
     pub(crate) rem: R,

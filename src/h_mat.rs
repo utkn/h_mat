@@ -10,15 +10,14 @@ mod row;
 mod slicer;
 mod writer;
 
-pub(crate) use access_col::*;
-pub(crate) use access_row::*;
-pub(crate) use iterator::*;
-
+pub use access_col::*;
+pub use access_row::*;
 pub use extend::*;
 pub use h_col::*;
 pub use h_mat_ref::*;
+pub use iterator::*;
 pub use row::*;
-pub use slicer::Slicer;
+pub use slicer::*;
 pub use writer::*;
 
 /// A heterogenous matrix, in which every row is a vector of a different type.
