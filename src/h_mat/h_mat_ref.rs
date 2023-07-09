@@ -1,4 +1,4 @@
-use crate::{AccessColRef, AccessRowRef, HCol, NewWriter};
+use crate::{AccessColRef, AccessRowRef, HCol};
 
 use super::{HColIter, Row};
 
@@ -36,13 +36,5 @@ impl<'a, T, R> HMatRef<'a, T, R> {
             curr_col_idx: 0,
             num_cols,
         }
-    }
-
-    /// Constructs a writer from this reference matrix.
-    pub fn writer(&self) -> <Self as NewWriter>::Ret
-    where
-        Self: NewWriter,
-    {
-        NewWriter::new_writer(self)
     }
 }

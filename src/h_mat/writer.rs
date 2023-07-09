@@ -4,11 +4,13 @@ use itertools::Itertools;
 
 use crate::{AccessRowMut, HMat};
 
+mod merge;
 mod new_writer;
 mod row_mod;
 mod sub_writer;
 
-pub(crate) use new_writer::*;
+use merge::*;
+pub use new_writer::*;
 use row_mod::*;
 use sub_writer::*;
 
@@ -24,7 +26,7 @@ pub struct HMatWriter<T, R> {
 pub struct ApplyWriterDirective<Head, Tail>(PhantomData<*const Head>, PhantomData<*const Tail>);
 
 /// Represents a type that can receive a writer `W` to modify itself.
-pub trait ApplyWriter<W, D> {
+pub trait ApplyWriter<W, Directive> {
     fn apply(&mut self, w: W);
 }
 
@@ -88,6 +90,13 @@ impl<T, R> HMatWriter<T, R> {
             .row_mods
             .push(RowMod::UpdateCol(col_idx, Box::new(f)));
     }
+
+    pub fn merge<T2, R2, Directive>(&mut self, other: HMatWriter<T2, R2>)
+    where
+        Self: Merge<HMatWriter<T2, R2>, Directive>,
+    {
+        Merge::<HMatWriter<T2, R2>, Directive>::merge(self, other);
+    }
 }
 
 #[cfg(test)]
@@ -97,7 +106,7 @@ mod tests {
     use super::new_writer::NewWriter;
 
     #[test]
-    fn writer() {
+    fn basic() {
         let mut mat = HMat::<usize, ()>::new().extend::<f32>().extend::<i32>();
         {
             let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
@@ -125,6 +134,36 @@ mod tests {
         {
             let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
             assert_eq!(ref_mat.get_row_ref(), &Row::<i32>::from_iter([None]));
+        }
+    }
+
+    #[test]
+    fn merge() {
+        let mut mat = HMat::<usize, ()>::new().extend::<f32>().extend::<i32>();
+        let w1 = {
+            let ref_mat: HMatRef<f32, HMatRef<i32, ()>> = HMatRef::slice(&mat);
+            let mut writer = ref_mat.new_writer();
+            // Set the column 0 of the i32 row.
+            writer.set_col(0, 3);
+            // Update the column 0 of the i32 row.
+            writer.update_col(0, |val: &mut i32| {
+                *val += 1;
+            });
+            writer
+        };
+        let mut w2 = {
+            let mut writer = mat.new_writer();
+            // Update the column 0 of the i32 row.
+            writer.update_col(0, |val: &mut i32| {
+                *val += 1;
+            });
+            writer
+        };
+        w2.merge(w1);
+        mat.apply(w2);
+        {
+            let ref_mat: HMatRef<i32, ()> = HMatRef::slice(&mat);
+            assert_eq!(ref_mat.get_row_ref(), &Row::<i32>::from_iter([Some(5)]));
         }
     }
 }

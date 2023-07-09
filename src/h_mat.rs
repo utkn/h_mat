@@ -13,12 +13,12 @@ mod writer;
 pub(crate) use access_col::*;
 pub(crate) use access_row::*;
 pub(crate) use iterator::*;
-pub(crate) use slicer::*;
 
 pub use extend::*;
 pub use h_col::*;
 pub use h_mat_ref::*;
 pub use row::*;
+pub use slicer::Slicer;
 pub use writer::*;
 
 /// A heterogenous matrix, in which every row is a vector of a different type.
@@ -37,6 +37,7 @@ impl<T> HMat<T, ()> {
         }
     }
 
+    /// Creates a new `HMat` with a single row of `T` initialized with the given contents.
     pub fn new_with(iter: impl IntoIterator<Item = Option<T>>) -> Self {
         HMat {
             head_row: Row::from_iter(iter),
